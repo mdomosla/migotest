@@ -1,8 +1,7 @@
 import random
 import string
-from lib.logger import Logger
+from datetime import datetime
 
-log = Logger()
 
 
 def random_string(length, upper=True):
@@ -15,7 +14,6 @@ def random_string(length, upper=True):
         word = ''.join(random.choice(string.ascii_uppercase) for _ in range(length))
     else:
         word = ''.join(random.choice(string.ascii_lowercase) for _ in range(length))
-    log.logger('DEBUG', F'random string {word} generated')
     return word
 
 
@@ -25,7 +23,6 @@ def random_digits(length):
     :return: string
     """
     word = ''.join(random.choice(string.digits) for _ in range(length))
-    log.logger('DEBUG', F'random string digits {word} generated')
     if word.startswith('0'):
         word = word.replace('0', '1')
     return word
@@ -41,7 +38,6 @@ def random_chars_digits(length, upper=True):
         word = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(length))
     else:
         word = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(length))
-    log.logger('DEBUG', F'random string with letters and digits generated: {word}')
     return word
 
 

@@ -19,14 +19,17 @@ class MigoAPIClient(RequestManager):
         }
         return headers
 
-    def get_token(self):
-        login_creds = f"{self.user}:{self.password}"
+    def get_token(self, custom_creds=False, login=None, passwd=None):
+        if custom_creds:
+            login_creds = f"{login}:{passwd}"
+        else:
+            login_creds = f"{self.user}:{self.password}"
         payload = {}
         headers = self.create_authorization_header(login_creds)
         token_url = f"{self.url}/token"
         log.logger("INFO", "Creating new access token")
         resp = self.post_request_with_headers(token_url, headers=headers, payload=payload)
-        return resp["response"]["key"], resp["code"]
+        return resp["response"], resp["code"]
 
     def get_clients(self, token):
         payload = {}
@@ -44,14 +47,18 @@ class MigoAPIClient(RequestManager):
         resp = self.get_request_with_headers(client_url, headers=headers, payload=payload)
         return resp["response"], resp["code"]
 
-    def add_client(self, token, client_first_name, client_last_name, client_phone):
-        payload = json.dumps(
-            {
-                "firstName": client_first_name,
-                "lastName": client_last_name,
-                "phone": client_phone
-            }
-        )
+    def add_client(self, token, client_first_name=None, client_last_name=None, client_phone=None, custom_payload=False,
+                   payload=None):
+        if custom_payload:
+            payload = json.dumps(payload)
+        else:
+            payload = json.dumps(
+                {
+                    "firstName": client_first_name,
+                    "lastName": client_last_name,
+                    "phone": client_phone
+                }
+            )
         client_url = f"{self.url}/client"
         headers = {
             'Content-Type': 'application/json',
@@ -62,15 +69,19 @@ class MigoAPIClient(RequestManager):
         resp = self.post_request_with_headers(client_url, headers=headers, payload=payload)
         return resp["response"], resp["code"]
 
-    def put_client(self, token, client_id, client_first_name, client_last_name, client_phone):
+    def put_client(self, token, client_id, client_first_name=None, client_last_name=None, client_phone=None,
+                   custom_payload=False, payload=None):
         client_url = f"{self.url}/client/{client_id}"
-        payload = json.dumps(
-            {
-                "firstName": client_first_name,
-                "lastName": client_last_name,
-                "phone": client_phone
-            }
-        )
+        if custom_payload:
+            payload = json.dumps(payload)
+        else:
+            payload = json.dumps(
+                {
+                    "firstName": client_first_name,
+                    "lastName": client_last_name,
+                    "phone": client_phone
+                }
+            )
         headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -92,3 +103,9 @@ class MigoAPIClient(RequestManager):
         log.logger("INFO", f"Deleting client {client_id}")
         resp = self.delete_request_with_headers(client_url, headers=headers, payload=payload)
         return resp["response"], resp["code"]
+
+    def clear_all_clients(self, token):
+        clients = self.get_clients(token)[0]
+        while len(clients["clients"]) > 0:
+            self.delete_client(token, clients["clients"][0]["id"])
+            clients = self.get_clients(token)[0]
